@@ -6,19 +6,19 @@ import {ApiResponse} from "../utils/ApiResponse.js"
 
 const registeruser = asycnHandler(async (req, res) => {
   // get required user details from client
-  const { fullName, email, userNme, password } = req.body;
-  console.log(fullName, email, userNme, password);
+  const { fullName, email, userName, password } = req.body;
+  console.log(fullName, email, userName, password);
 
   // validation of fields - not empty
   if (
-    [fullName, email, password, userNme].some((field) => field?.trim() === "")
+    [fullName, email, password, userName].some((field) => field?.trim() === "")
   ) {
     throw new ApiError(400, "All fields are requried");
   }
 
   // check if user already exists
-  const existedUser = UserModal.findOne({
-    $or: [{ userNme }, { email }],
+  const existedUser = await UserModal.findOne({
+    $or: [{ userName }, { email }],
   });
   console.log("User alreay existed found", existedUser);
   if (existedUser) {
@@ -27,7 +27,10 @@ const registeruser = asycnHandler(async (req, res) => {
 
   // check for images, check for avatar(required)
   const avatarLocalPath = req.files?.avatar[0]?.path;
-  const coverImageLocalPath = req.files?.coverImage[0]?.path;
+  let coverImageLocalPath;
+  if(req.files && Array.isArray(req.files.coverImage && req.files.coverImage.length > 0)){
+      coverImageLocalPath = req.files?.coverImage[0]?.path;
+  }
   if (!avatarLocalPath) {
     throw new ApiError(400, "avatar file is required");
   }
@@ -47,7 +50,8 @@ const registeruser = asycnHandler(async (req, res) => {
     avatar: avatar.url,
     coverImage: coverImage?.url || "",
     email,
-    userName: userNme.toLowerCase(),
+    password,
+    userName: userName.toLowerCase(),
   });
 
   // remove password and refresh token field from response
@@ -58,8 +62,9 @@ const registeruser = asycnHandler(async (req, res) => {
   // check for user creation
   if (!createdUser) {
     throw new ApiError(503,"something went wrong, user not created, please try again");
-  }
-  console.log("created user:", createdUser);
+  }else{
+      console.log("created user:", createdUser);
+    }
 
   // return response
   return res.status(201).json(new ApiResponse( //    constructor(statusCode,data,message = "success"){
