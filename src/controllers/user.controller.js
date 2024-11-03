@@ -99,17 +99,17 @@ const registeruser = asycnHandler(async (req, res) => {
 const loginUser = asycnHandler(async (req, res, next) => {
   // req body
   const { email, password, userName } = req.body;
-
+    console.log(req.body)
   // username or email for login
   if (!userName || !email) {
     throw new ApiError(400, "username or email is required");
   }
 
   // find the user
-  const user = UserModal.findOne({
-    $and: [{ userName }, { email }],
+  const user = await UserModal.findOne({
+    $or: [{ userName }, { email }],
   });
-
+  console.log("user found",user)
   // password check
   if (!user) {
     throw new ApiError(404, "User does not exists");
@@ -140,4 +140,24 @@ const loginUser = asycnHandler(async (req, res, next) => {
 
 });
 
-export { registeruser, loginUser };
+const logoutUser = asycnHandler( async (req,res,next)=>{
+    // fetch user from token and clear token in db
+    await UserModal.findByIdAndUpdate(
+        req.user?._id,{
+            $set:{
+                refreshToken:undefined
+            }
+        })
+    // clear cookie
+    const options = {
+        httpOnly:true,
+        secure:true
+    }
+    return res.status(200)
+    .clearCookie("accessToken",options)
+    .clearCookie("refresToken",options)
+    .json(new ApiResponse(200,{},"user logged out"))
+    // reset fresher & access token 
+})
+
+export { registeruser, loginUser, logoutUser };
