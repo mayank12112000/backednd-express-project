@@ -43,6 +43,9 @@ const userSchema = new mongoose.Schema({
     },
     refreshToken:{
         type:String
+    },
+    accessToken:{
+        type:String
     }
 },{timestamps: true });
 
@@ -53,7 +56,6 @@ userSchema.pre("save",async function(next){
     next()
 })
 userSchema.methods.isPasswordCorrect = async function(password){
-    console.log("user password:",this.password) // removie
     return await bcrypt.compare(password,this.password) // will return boolean
 }
 
@@ -69,7 +71,7 @@ userSchema.methods.generateAccessToken =  function() {
         expiresIn:process.env.ACCESS_TOKEN_EXPIRY
     })
 }
-userSchema.methods.generateRefreshToken = async function () {
+userSchema.methods.generateRefreshToken = function () {
     return jwt.sign({
         _id:this._id
     },

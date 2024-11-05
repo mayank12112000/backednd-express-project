@@ -1,4 +1,4 @@
-import { asycnHandler } from "./../utils/asyncHandler.js";
+import { asyncHandler } from "./../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { UserModal } from "../models/user.model.js";
 import { uploadOnClouudinary } from "../utils/cloudinary.js";
@@ -11,15 +11,15 @@ const generateAccessandRefreshTokens = async (userId) => {
     const refreshToken = user.generateRefreshToken();
     //save accesstoken and refresh token to db
     user.refreshToken = refreshToken;
+    user.accessToken = accessToken
     await user.save({ validateBeforeSave: false }); // we are not making validation for other fields of user like username password etc
-
     return { accessToken, refreshToken };
   } catch (error) {
     throw new ApiError(503, "something got wrong while generating tokens");
   }
 };
 
-const registeruser = asycnHandler(async (req, res) => {
+const registeruser = asyncHandler(async (req, res) => {
   // get required user details from client
   const { fullName, email, userName, password } = req.body;
   console.log(fullName, email, userName, password);
@@ -96,10 +96,9 @@ const registeruser = asycnHandler(async (req, res) => {
 });
 
 // login user
-const loginUser = asycnHandler(async (req, res, next) => {
+const loginUser = asyncHandler(async (req, res, next) => {
   // req body
   const { email, password, userName } = req.body;
-    console.log(req.body)
   // username or email for login
   if (!userName || !email) {
     throw new ApiError(400, "username or email is required");
@@ -109,7 +108,6 @@ const loginUser = asycnHandler(async (req, res, next) => {
   const user = await UserModal.findOne({
     $or: [{ userName }, { email }],
   });
-  console.log("user found",user)
   // password check
   if (!user) {
     throw new ApiError(404, "User does not exists");
@@ -140,7 +138,7 @@ const loginUser = asycnHandler(async (req, res, next) => {
 
 });
 
-const logoutUser = asycnHandler( async (req,res,next)=>{
+const logoutUser = asyncHandler( async (req,res,next)=>{
     // fetch user from token and clear token in db
     await UserModal.findByIdAndUpdate(
         req.user?._id,{

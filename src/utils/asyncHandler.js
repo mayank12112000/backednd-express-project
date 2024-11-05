@@ -1,8 +1,8 @@
 // we can do using try catch or promise
-// import { asycnHandler } from './asyncHandler.js';
+// import { asyncHandler } from './asyncHandler.js';
 /* using trycatch:
-export const asycnHandler = (fn)=> async(req,res,next)=>{
-    // it is same t0 = export const asycnHandler = (fn)=> {async()=>{}}
+export const asyncHandler = (fn)=> async(req,res,next)=>{
+    // it is same t0 = export const asyncHandler = (fn)=> {async()=>{}}
 
     try {
         await fn(req,res,next)
@@ -15,7 +15,7 @@ export const asycnHandler = (fn)=> async(req,res,next)=>{
 }*/
 
 // using promise
-export const asycnHandler = (requestHandler)=>{
+export const asyncHandler = (requestHandler)=>{
     return (req,res,next)=>{
         Promise.resolve(requestHandler(req,res,next)).catch(err=> next(err))
     }
