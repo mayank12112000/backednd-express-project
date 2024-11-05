@@ -195,4 +195,36 @@ const refreshAccessToken = asyncHandler( async(req,res,next)=>{
     }
 })
 
+const changeCurrentPassword = asyncHandler(async(req,res,next)=>{
+    const {oldPassword,newPassword} = req.body
+    const user = await UserModal.findById(req.user?.id)  // user will come from auth middleware
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+    if(!isPasswordCorrect){
+        throw new ApiError(400,"Invalid old password")
+    }
+
+    user.password = newPassword
+    await user.save({validateBeforeSave:false})
+
+    return res
+    .status(200)
+    .json(new  ApiResponse(200,{},"password changed successfully"))
+})
+
+const getCurrentUser = asyncHandler(async(res,res,next)=>{
+        return res.status(200).json(new ApiResponse(200,req.user,"current user fetched successfully"))
+})
+
+const updateAccountDetails = asyncHandler(async(req,res,next)=>{
+    const {fullName,email,user} = req.body
+    user.fullName = fullName
+    user.email = email
+    await user.save({validateBeforeSave:false})
+
+    return res.status(200)
+    .json(new ApiResponse(200,{},"email and password changed successfully"))
+
+
+})
+
 export { registeruser, loginUser, logoutUser, refreshAccessToken };
