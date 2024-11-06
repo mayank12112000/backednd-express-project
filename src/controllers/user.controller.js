@@ -217,14 +217,58 @@ const getCurrentUser = asyncHandler(async(res,res,next)=>{
 
 const updateAccountDetails = asyncHandler(async(req,res,next)=>{
     const {fullName,email,user} = req.body
+    if(!fullName || !email){
+        throw new ApiError(400,"email and fullname is required")
+    }
     user.fullName = fullName
     user.email = email
     await user.save({validateBeforeSave:false})
 
     return res.status(200)
-    .json(new ApiResponse(200,{},"email and password changed successfully"))
+    .json(new ApiResponse(200,user.select("-password"),"email and password changed successfully"))
 
 
 })
 
-export { registeruser, loginUser, logoutUser, refreshAccessToken };
+const updatedAvatar = asyncHandler(async(req,res,next)=>{
+    try {
+        const avatarLocalPath = req.file?.path // req.files comes using multer middleware
+        if(!avatarLocalPath){
+            throw new ApiError(400,"Avatar file is missing")
+        }
+        // todo : remove previous avatar in cloudinary
+        const avatar = await uploadOnClouudinary(avatarLocalPath)
+        if(!avatar.url){
+            throw new ApiError(400,"Avatar url is missing while uploading on cloudinary")
+        }
+        const user = req.user
+        user.avatar = avatar
+        await user.save({validateBeforeSave:false})
+        return res.status(200).json(new ApiResponse(200,user.select("-password")),"avatar updated successfully")
+    } catch (error) {
+        throw new ApiError(503,"something went wrong while updating avatar")
+    }
+})
+
+const updateCoverImage = asyncHandler(async(req,res,next)=>{
+    try {
+        const coverImageLocalPath = req.file?.path // req.files comes using multer middleware
+        if(!coverImageLocalPath){
+            throw new ApiError(400,"cover image file is missing")
+        }
+        
+        const coverImage = await uploadOnClouudinary(coverImageLocalPath)
+        if(!coverImage.url){
+            throw new ApiError(400,"Cover image url is missing while uploading on cloudinary")
+        }
+        const user = req.user
+        user.coverImage = coverImage
+        await user.save({validateBeforeSave:false})
+        // todo : remove previous avatar in cloudinary
+        return res.status(200).json(new ApiResponse(200,user.select("-password")),"cover Image updated successfully")
+    } catch (error) {
+        throw new ApiError(503,"something went wrong while updating cover image")
+    }
+})
+
+export { registeruser, loginUser, logoutUser, refreshAccessToken, changeCurrentPassword,getCurrentUser,updateAccountDetails,updatedAvatar,updateCoverImage };
